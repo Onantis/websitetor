@@ -7,8 +7,13 @@
   "bin": {
     "websitetor": "dist/cli/index.js"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
+    "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
     "dev": "tsc --watch"
   },
@@ -33,6 +38,7 @@
   "devDependencies": {
     "@types/cheerio": "^0.22.35",
     "@types/mime-types": "^2.1.4",
-    "@types/node": "catalog:"
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0"
   }
 }
