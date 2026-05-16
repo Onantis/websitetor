@@ -10,10 +10,11 @@ Download full websites with all assets, including HTML, CSS, JS, JSON, TXT, and 
 - [Usage](#usage)
   - [Basic Usage](#basic-usage)
   - [Archived Version](#archived-version)
+  - [Validate a Downloaded Site](#validate-a-downloaded-site)
   - [CLI](#cli)
 - [API](#api)
-  - [Options](#options)
-  - [Result](#result)
+  - [download](#downloadurl-destination-options)
+  - [validate](#validatepath)
 - [CLI Commands](#cli-commands)
 - [Project Structure](#project-structure)
 - [License](#license)
@@ -28,6 +29,7 @@ Websitetor is a Node.js package for downloading complete websites to disk. It ha
 - Archived website support via the Wayback Machine
 - Recursive link crawling with configurable depth
 - Parallel downloads with configurable concurrency
+- Validates downloaded sites for broken internal links and missing assets
 - CLI and programmatic API
 - Returns a structured result with file count and error details
 
@@ -59,6 +61,21 @@ download("https://example.com", "./example-archive", { wayback: true })
   .catch(console.error);
 ```
 
+### Validate a Downloaded Site
+
+```js
+import { validate } from "websitetor";
+
+const result = validate("./example-site");
+
+if (result.valid) {
+  console.log("Site is complete. No broken links or missing assets.");
+} else {
+  console.log(`Broken links: ${result.brokenLinks.length}`);
+  console.log(`Missing assets: ${result.missingAssets.length}`);
+}
+```
+
 ### CLI
 
 ```bash
@@ -74,6 +91,12 @@ websitetor download https://example.com ./example-site --depth 3
 # Set concurrency
 websitetor download https://example.com ./example-site --concurrency 5
 
+# Validate a downloaded site
+websitetor validate ./example-site
+
+# Validate and output JSON
+websitetor validate ./example-site --json
+
 # List available commands
 websitetor list
 ```
@@ -88,7 +111,7 @@ Downloads a website and saves all resources to the destination directory.
 download(url: string, destination: string, options?: DownloadOptions): Promise<DownloadResult>
 ```
 
-### Options
+#### DownloadOptions
 
 ```ts
 interface DownloadOptions {
@@ -98,7 +121,7 @@ interface DownloadOptions {
 }
 ```
 
-### Result
+#### DownloadResult
 
 ```ts
 interface DownloadResult {
@@ -128,20 +151,79 @@ Example:
 }
 ```
 
+---
+
+### `validate(path)`
+
+Scans a previously downloaded site directory for broken internal links and missing assets. Parses every HTML file and checks that all referenced resources exist on disk.
+
+```ts
+validate(sitePath: string): ValidationResult
+```
+
+#### ValidationResult
+
+```ts
+interface ValidationResult {
+  valid: boolean;
+  htmlFiles: number;
+  brokenLinks: Array<{
+    file: string;
+    href: string;
+    reason: string;
+  }>;
+  missingAssets: Array<{
+    file: string;
+    src: string;
+    reason: string;
+  }>;
+}
+```
+
+Example:
+
+```json
+{
+  "valid": false,
+  "htmlFiles": 5,
+  "brokenLinks": [
+    {
+      "file": "index.html",
+      "href": "/about.html",
+      "reason": "File not found on disk"
+    }
+  ],
+  "missingAssets": [
+    {
+      "file": "index.html",
+      "src": "/images/logo.png",
+      "reason": "Asset not found on disk"
+    }
+  ]
+}
+```
+
 ## CLI Commands
 
-| Command                              | Description                              |
-| ------------------------------------ | ---------------------------------------- |
-| `websitetor list`                    | List all available commands and options  |
-| `websitetor download <url> <dest>`   | Download a website to a local directory  |
+| Command                              | Description                                              |
+| ------------------------------------ | -------------------------------------------------------- |
+| `websitetor list`                    | List all available commands and options                  |
+| `websitetor download <url> <dest>`   | Download a website to a local directory                  |
+| `websitetor validate <path>`         | Scan a downloaded site for broken links and missing assets |
 
 ### `download` options
 
-| Option                  | Description                                          | Default |
-| ----------------------- | ---------------------------------------------------- | ------- |
-| `--wayback`             | Use the Wayback Machine instead of the live site     | `false` |
-| `--depth <number>`      | Maximum link recursion depth                         | `5`     |
-| `--concurrency <number>`| Number of files downloaded in parallel               | `3`     |
+| Option                   | Description                                          | Default |
+| ------------------------ | ---------------------------------------------------- | ------- |
+| `--wayback`              | Use the Wayback Machine instead of the live site     | `false` |
+| `--depth <number>`       | Maximum link recursion depth                         | `5`     |
+| `--concurrency <number>` | Number of files downloaded in parallel               | `3`     |
+
+### `validate` options
+
+| Option   | Description                        | Default |
+| -------- | ---------------------------------- | ------- |
+| `--json` | Output the full result as JSON     | `false` |
 
 ## Project Structure
 
@@ -151,6 +233,7 @@ websitetor/
 │   ├── downloader/       # Core crawl and download engine
 │   ├── resolver/         # HTML and CSS link extraction
 │   ├── archiver/         # Wayback Machine integration
+│   ├── validator/        # Broken link and missing asset scanner
 │   ├── utils/            # URL helpers and path mapping
 │   ├── cli/              # CLI entry point
 │   └── index.ts          # Public API exports
