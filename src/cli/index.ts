@@ -2,6 +2,7 @@
 
 import { Command } from "commander";
 import { download } from "../downloader";
+import { validate } from "../validator";
 
 const program = new Command();
 
@@ -60,6 +61,23 @@ program
           "websitetor download https://example.com ./example-site",
           "websitetor download https://example.com ./archive --wayback",
           "websitetor download https://example.com ./site --depth 3 --concurrency 5",
+        ],
+      },
+      {
+        name: "validate",
+        usage: "websitetor validate <path>",
+        description:
+          "Scan a previously downloaded site for broken internal links and missing assets. Checks all HTML files and reports any href or src references that do not resolve to a file on disk.",
+        options: [
+          {
+            flag: "--json",
+            description: "Output the full result as JSON.",
+            default: "false",
+          },
+        ],
+        examples: [
+          "websitetor validate ./example-site",
+          "websitetor validate ./example-site --json",
         ],
       },
     ];
@@ -142,6 +160,58 @@ program
       }
     }
   );
+
+program
+  .command("validate <path>")
+  .description("Scan a downloaded site for broken internal links and missing assets")
+  .option("--json", "Output the full result as JSON", false)
+  .action((sitePath: string, opts: { json: boolean }) => {
+    console.log(`\nWebsitetor — validating "${sitePath}"\n`);
+
+    try {
+      const result = validate(sitePath);
+
+      if (opts.json) {
+        console.log(JSON.stringify(result, null, 2));
+        process.exit(result.valid ? 0 : 1);
+        return;
+      }
+
+      console.log(`  HTML files scanned: ${result.htmlFiles}`);
+      console.log(`  Broken links:       ${result.brokenLinks.length}`);
+      console.log(`  Missing assets:     ${result.missingAssets.length}`);
+      console.log();
+
+      if (result.brokenLinks.length > 0) {
+        console.log("Broken Links:");
+        for (const b of result.brokenLinks) {
+          console.log(`  [${b.file}]  href="${b.href}"  — ${b.reason}`);
+        }
+        console.log();
+      }
+
+      if (result.missingAssets.length > 0) {
+        console.log("Missing Assets:");
+        for (const a of result.missingAssets) {
+          console.log(`  [${a.file}]  src="${a.src}"  — ${a.reason}`);
+        }
+        console.log();
+      }
+
+      if (result.valid) {
+        console.log("All links and assets resolved. Site looks complete.");
+      } else {
+        console.error(
+          `Validation failed: ${result.brokenLinks.length} broken link(s), ${result.missingAssets.length} missing asset(s).`
+        );
+        process.exit(1);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`\nFatal error: ${message}`);
+      process.exit(1);
+    }
+  });
 
 program.parseAsync(process.argv).catch((err) => {
   console.error(err instanceof Error ? err.message : String(err));

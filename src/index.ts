@@ -3,3 +3,5 @@ export type { DownloadOptions, DownloadResult, DownloadError } from "./downloade
 export { getWaybackUrl, transformWaybackUrl, extractOriginalUrl } from "./archiver";
 export { resolveResources, extractCssUrls } from "./resolver";
 export type { ResolvedResources } from "./resolver";
+export { validate } from "./validator";
+export type { ValidationResult, BrokenLink, MissingAsset } from "./validator";
