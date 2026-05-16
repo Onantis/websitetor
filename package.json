@@ -1,0 +1,38 @@
+{
+  "name": "websitetor",
+  "version": "1.0.0",
+  "description": "Download full websites with all assets, including HTML, CSS, JS, JSON, TXT, and archived snapshots from the Wayback Machine.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "websitetor": "dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "website",
+    "downloader",
+    "scraper",
+    "wayback",
+    "archive",
+    "crawler",
+    "offline"
+  ],
+  "author": "Onantis",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.0",
+    "cheerio": "^1.0.0",
+    "commander": "^13.1.0",
+    "mime-types": "^2.1.35",
+    "p-limit": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/cheerio": "^0.22.35",
+    "@types/mime-types": "^2.1.4",
+    "@types/node": "catalog:"
+  }
+}
